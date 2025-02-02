@@ -1,93 +1,130 @@
-// C++ program to implement tic tac toe game
 #include <iostream>
+#include <vector>
+#include <cstdlib>
+#include <ctime>
+#include <limits> // Required for numeric_limits
+
 using namespace std;
 
-// Function to draw the Tic-Tac-Toe board
-void drawBoard(char board[3][3])
-{
-    cout << "-------------\n";
-    for (int i = 0; i < 3; i++) {
-        cout << "| ";
-        for (int j = 0; j < 3; j++) {
-            cout << board[i][j] << " | ";
+// ... (drawBoard and checkWin functions remain the same)
+
+// Function to get valid integer input from the user (improved)
+int getValidIntegerInput(const string& prompt, int min, int max) {
+    int input;
+    while (true) {
+        cout << prompt;
+        cin >> input;
+
+        if (cin.fail()) {
+            cout << "Invalid input. Please enter an integer.\n";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            continue;
         }
-        cout << "\n-------------\n";
+
+        if (input >= min && input <= max) {
+            break;
+        } else {
+            cout << "Input must be between " << min << " and " << max << ".\n";
+        }
     }
+    return input;
 }
 
-// Function to check for a win
-bool checkWin(char board[3][3], char player)
-{
-    // Check rows, columns, and diagonals
+
+// Function for the computer's move (Improved AI - blocking/winning)
+void computerMove(char board[3][3]) {
+    // 1. Check if computer can win in this turn
     for (int i = 0; i < 3; i++) {
-        if (board[i][0] == player && board[i][1] == player
-            && board[i][2] == player)
-            return true;
-        if (board[0][i] == player && board[1][i] == player
-            && board[2][i] == player)
-            return true;
+        for (int j = 0; j < 3; j++) {
+            if (board[i][j] == ' ') {
+                board[i][j] = 'O'; // Temporarily make the move
+                if (checkWin(board, 'O')) {
+                    cout << "Computer played at row " << i << ", column " << j << endl;
+                    return; // Win found, move made
+                }
+                board[i][j] = ' '; // Undo the move
+            }
+        }
     }
-    if (board[0][0] == player && board[1][1] == player
-        && board[2][2] == player)
-        return true;
-    if (board[0][2] == player && board[1][1] == player
-        && board[2][0] == player)
-        return true;
-    return false;
+
+    // 2. Check if player can win in this turn, block if possible
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            if (board[i][j] == ' ') {
+                board[i][j] = 'X'; // Temporarily make the move for player
+                if (checkWin(board, 'X')) {
+                    board[i][j] = 'O'; // Block the player
+                    cout << "Computer played at row " << i << ", column " << j << endl;
+                    return; // Block made
+                }
+                board[i][j] = ' '; // Undo the move
+            }
+        }
+    }
+
+
+    // 3. If no winning or blocking move, make a random move (less important now)
+    vector<pair<int, int>> availableSpots;
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            if (board[i][j] == ' ') {
+                availableSpots.push_back({i, j});
+            }
+        }
+    }
+
+    if (!availableSpots.empty()) {
+        srand(time(0)); // Seed the random number generator
+        int randomIndex = rand() % availableSpots.size();
+        int row = availableSpots[randomIndex].first;
+        int col = availableSpots[randomIndex].second;
+        board[row][col] = 'O';
+        cout << "Computer played at row " << row << ", column " << col << endl;
+    }
 }
 
-int main()
-{
-    // Initialize the board and players
-    char board[3][3] = { { ' ', ' ', ' ' },
-                         { ' ', ' ', ' ' },
-                         { ' ', ' ', ' ' } };
+int main() {
+    // ... (rest of the main function remains the same)
+    char board[3][3] = {{' ', ' ', ' '}, {' ', ' ', ' '}, {' ', ' ', ' '}};
     char player = 'X';
     int row, col;
-    int turn; // Declare turn here
+    int turn;
 
-    cout << "Welcome to Tic-Tac-Toe!\n";
+    cout << "Welcome to X O Game Best OfLuck!\n";
 
-    // Game loop
     for (turn = 0; turn < 9; turn++) {
-        // Draw the board
         drawBoard(board);
 
-        // Prompt for valid input
-        while (true) {
-            cout << "Player " << player
-                 << ", enter row (0-2) and column (0-2): ";
-            cin >> row >> col;
+        if (player == 'X') { // Human player's turn
+            while (true) {
+                row = getValidIntegerInput("Player " + string(1, player) + ", enter row (0-2): ", 0, 2);
+                col = getValidIntegerInput("Player " + string(1, player) + ", enter column (0-2): ", 0, 2);
 
-            if (board[row][col] != ' ' || row < 0 || row > 2
-                || col < 0 || col > 2) {
-                cout << "Invalid move. Try again.\n";
+                if (board[row][col] != ' ') {
+                    cout << "Invalid move. Try again.\n";
+                } else {
+                    break;
+                }
             }
-            else {
-                break; // Valid input, exit the loop.
-            }
+            board[row][col] = player;
+        } else { // Computer's turn
+            computerMove(board);
         }
 
-        // Make the move
-        board[row][col] = player;
 
-        // Check for a win after making a move
+
         if (checkWin(board, player)) {
             drawBoard(board);
             cout << "Player " << player << " wins!\n";
-            break; // Exit the loop after a win.
+            break;
         }
 
-        // Switch to the other player
-        player = (player == 'X') ? 'O' : 'X';
+        player = (player == 'X') ? 'O' : 'X'; // Switch players
     }
 
-    // End of the game
     drawBoard(board);
-
-    // Check for a draw
-    if (turn == 9 && !checkWin(board, 'X')
-        && !checkWin(board, 'O')) {
+    if (turn == 9 && !checkWin(board, 'X') && !checkWin(board, 'O')) {
         cout << "It's a draw!\n";
     }
 
